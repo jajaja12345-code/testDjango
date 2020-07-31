@@ -23,11 +23,23 @@ serv = ing.select_one(".servings_for.yield").text
 
 def index(request):
     posts = Post.objects.all()
+    listX = []
 
     form = PostForm()
 
-    listX = ["aa", "bb"]
-    context = {'posts': posts, 'form': form, 'listX': listX}
+    # print("posts in index")
+    # print(posts)
+
+    # for i in posts:
+    # listX.append(i.getlist('body'))
+    # print(i)
+    # print(i.body)
+
+    # イメージ
+    # listAll = [["aa", "bb"], ["cc", "dd"]]
+
+    # listX = ["aa", "bb"]
+    context = {'posts': posts, 'form': form, 'listAll': listX}
 
     # context = {'posts': posts, 'form': form}
 
@@ -36,6 +48,7 @@ def index(request):
 
 
 def create(request):
+    # 変更前
     form = PostForm(request.POST)
     print("request.POST: ")
     print(request.POST)
@@ -47,7 +60,7 @@ def create(request):
     ing = soup.find(id="ingredients")
     serv = ing.select_one(".servings_for.yield").text
     request.POST['body'] = serv
-    request.POST.update({'body': 'AAA'})
+    # request.POST.update({'body': 'AAA'})
 
     request.POST._mutable = False
 
@@ -56,14 +69,32 @@ def create(request):
     print(request.POST)
     print("request.POST['body']: " + request.POST['body'])
     print("list size: " + str(len(request.POST)))  # OK
-    print("forで値が取り出せるかテスト")
-    for name in request.POST['body']:
-        print(name)
+    # print("forで値が取り出せるかテスト")
+    # for name in request.POST['body']:
+    # print(name)  -> 出力AAA
+
+    print(request.POST.getlist('body'))
+    print(request.POST.getlist('body')[0])
+
+    for i in request.POST.getlist('body'):
+        print(i)
+
+    # postformにlistフィールドはないけどこれで作れる
+    print(form)
+    # form.list = request.POST.getlist('body')
+    form.list = "xxxxxxxxxxxxxx"
 
     # 基本的にquerydictは不変
-    # request.POST['body'] = "change"
+    # request.POST['body'] = "change" ->怒られる
+
+    # 変更後
+    # form = PostForm(request.POST)
+    # print("print form in create function")
+    # print(form)
 
     form.save(commit=True)
+
+    print(form)
     return HttpResponseRedirect(reverse('todo:index'))  # todo一覧にリダイレクトできる
 
 
