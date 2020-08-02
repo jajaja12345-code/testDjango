@@ -2,4 +2,8 @@ from django.db import models
 
 
 class Post(models.Model):
-    body = models.CharField(max_length=200)  # todoリストの名前の長さは200まで
+    name = models.CharField(max_length=500)  # todoリストの名前の長さ上限10000
+    url = models.CharField(max_length=500)
+
+    def __str__(self):
+        return self.name
