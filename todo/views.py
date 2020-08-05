@@ -50,39 +50,88 @@ def index(request):
 def create(request):
     # 変更前
     form = PostForm(request.POST)
-    print("request.POST: ")
-    print(request.POST)
+    # print("request.POST: ")
+    # print(request.POST)
 
     request.POST._mutable = True
-    url = request.POST['body']
+    url = request.POST['name']
     html = requests.get(url)
     soup = BeautifulSoup(html.content, "html.parser")
     ing = soup.find(id="ingredients")
     serv = ing.select_one(".servings_for.yield").text
-    request.POST['body'] = serv
+    request.POST['url'] = serv
     # request.POST.update({'body': 'AAA'})
+
+    ingS = ""
+    ingRow = soup.find(id="ingredients_list").select(".ingredient_row")
+# print(len(ingRow))
+    for a in ingRow:
+        try:
+            # ingC = a.select_one(".ingredient_category").text
+            ingS += "," + a.select_one(".ingredient_category").text + ":"
+
+        except AttributeError as e:
+            # print("Attributeerror occurs (in category)")
+            #
+            pass
+        except:
+            # print("some error occurs(in category)")
+            pass
+        else:
+            pass
+
+        try:
+            ingS += "," + a.select_one(".name").text + "-"
+        except AttributeError as e:
+            # print("Attributeerror occurs (in name)")
+            pass
+            # continue
+        except:
+            # print("some error occurs(in name)")
+            # continue
+            pass
+        else:
+            # print(name)
+            pass
+
+        try:
+            ingS += a.select_one(".ingredient_quantity.amount").text
+        except AttributeError as e:
+            # print("Attributeerror occurs (in quantity)")
+            pass
+            # continue
+        except:
+            # print("some error occurs(in quantity)")
+            # continue
+            pass
+        else:
+            # print(qAmount)
+            pass
+
+    request.POST['name'] = ingS
+    # print(ingS)
 
     request.POST._mutable = False
 
     # 入力内容返却してくれる
-    print("request.POST: ")
-    print(request.POST)
-    print("request.POST['body']: " + request.POST['body'])
-    print("list size: " + str(len(request.POST)))  # OK
+    # print("request.POST: ")
+    # print(request.POST)
+    # print("request.POST['body']: " + request.POST['body'])
+    # print("list size: " + str(len(request.POST)))  # OK
     # print("forで値が取り出せるかテスト")
     # for name in request.POST['body']:
     # print(name)  -> 出力AAA
 
-    print(request.POST.getlist('body'))
-    print(request.POST.getlist('body')[0])
+    # print(request.POST.getlist('body'))
+    # print(request.POST.getlist('body')[0])
 
-    for i in request.POST.getlist('body'):
-        print(i)
+    # for i in request.POST.getlist('body'):
+    # print(i)
 
     # postformにlistフィールドはないけどこれで作れる
-    print(form)
+    # print(form)
     # form.list = request.POST.getlist('body')
-    form.list = "xxxxxxxxxxxxxx"
+    # form.list = "xxxxxxxxxxxxxx"
 
     # 基本的にquerydictは不変
     # request.POST['body'] = "change" ->怒られる
@@ -93,8 +142,6 @@ def create(request):
     # print(form)
 
     form.save(commit=True)
-
-    print(form)
     return HttpResponseRedirect(reverse('todo:index'))  # todo一覧にリダイレクトできる
 
 
