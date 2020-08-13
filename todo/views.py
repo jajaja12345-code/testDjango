@@ -10,15 +10,33 @@ from .forms import PostForm
 from bs4 import BeautifulSoup
 import requests
 
-"""
-url = "https://"
-html = requests.get(url)
-soup = BeautifulSoup(html.content, "html.parser")
 
-ing = soup.find(id="ingredients")
-serv = ing.select_one(".servings_for.yield").text
-"""
-#########
+# striptBlankとgetText合わせて取得した文を整形する
+def stripBlank(text):
+    lines = []
+    for line in text.splitlines():
+        lines.append(line.strip())
+    rValue = "\n".join(line for line in lines if line)
+    return rValue
+
+
+def getText(a, csSelec):
+    try:
+        # ingC = a.select_one(".ingredient_category").text
+        te = stripBlank(a.select_one(csSelec).text)
+
+    except AttributeError as e:
+        # print("Attributeerror occurs (in category)")
+        if csSelec == ".ingredient_category":
+            return None
+        return ""
+    except:
+        # print("some error occurs(in category)")
+        if csSelec == ".ingredient_category":
+            return None
+        return ""
+    else:
+        return te
 
 
 def index(request):
@@ -27,21 +45,7 @@ def index(request):
 
     form = PostForm()
 
-    # print("posts in index")
-    # print(posts)
-
-    # for i in posts:
-    # listX.append(i.getlist('body'))
-    # print(i)
-    # print(i.body)
-
-    # イメージ
-    # listAll = [["aa", "bb"], ["cc", "dd"]]
-
-    # listX = ["aa", "bb"]
     context = {'posts': posts, 'form': form, 'listAll': listX}
-
-    # context = {'posts': posts, 'form': form}
 
     return render(request, 'todo/index.html', context)  # render関数については後述
     # index.htmlに関してはあとで作る
@@ -60,86 +64,30 @@ def create(request):
     ing = soup.find(id="ingredients")
     serv = ing.select_one(".servings_for.yield").text
     request.POST['url'] = serv
-    # request.POST.update({'body': 'AAA'})
 
     ingS = ""
     ingRow = soup.find(id="ingredients_list").select(".ingredient_row")
-# print(len(ingRow))
     for a in ingRow:
-        try:
-            # ingC = a.select_one(".ingredient_category").text
-            ingS += "," + a.select_one(".ingredient_category").text + ":"
-
-        except AttributeError as e:
-            # print("Attributeerror occurs (in category)")
-            #
-            pass
-        except:
-            # print("some error occurs(in category)")
-            pass
-        else:
-            pass
-
-        try:
-            ingS += "," + a.select_one(".name").text + "-"
-        except AttributeError as e:
-            # print("Attributeerror occurs (in name)")
-            pass
-            # continue
-        except:
-            # print("some error occurs(in name)")
-            # continue
-            pass
-        else:
-            # print(name)
-            pass
-
-        try:
-            ingS += a.select_one(".ingredient_quantity.amount").text
-        except AttributeError as e:
-            # print("Attributeerror occurs (in quantity)")
-            pass
-            # continue
-        except:
-            # print("some error occurs(in quantity)")
-            # continue
-            pass
-        else:
-            # print(qAmount)
-            pass
+        temp = getText(a, ".ingredient_category")
+        if temp != None:
+            ingS += ',' + temp + ':'
+        ingS += ',' + getText(a, ".name") + "-"
+        ingS += getText(a, ".ingredient_quantity.amount")
 
     request.POST['name'] = ingS
     # print(ingS)
 
+    step = soup.find(id="steps").select(".step")
+    stepText = ""
+    for a in step:
+        # print(stripBlank(a.select_one(".instruction").select_one(".step_text").text))
+        stepText += ',' + stripBlank(a.select_one(
+            ".instruction").select_one(".step_text").text)
+    # print(stepText)
+    stepText = "&&&&&&&&&&&"
+    request.POST['url'] = stepText
     request.POST._mutable = False
-
-    # 入力内容返却してくれる
-    # print("request.POST: ")
-    # print(request.POST)
-    # print("request.POST['body']: " + request.POST['body'])
-    # print("list size: " + str(len(request.POST)))  # OK
-    # print("forで値が取り出せるかテスト")
-    # for name in request.POST['body']:
-    # print(name)  -> 出力AAA
-
-    # print(request.POST.getlist('body'))
-    # print(request.POST.getlist('body')[0])
-
-    # for i in request.POST.getlist('body'):
-    # print(i)
-
-    # postformにlistフィールドはないけどこれで作れる
-    # print(form)
-    # form.list = request.POST.getlist('body')
-    # form.list = "xxxxxxxxxxxxxx"
-
-    # 基本的にquerydictは不変
-    # request.POST['body'] = "change" ->怒られる
-
-    # 変更後
-    # form = PostForm(request.POST)
-    # print("print form in create function")
-    # print(form)
+    # print(request.POST['url'])
 
     form.save(commit=True)
     return HttpResponseRedirect(reverse('todo:index'))  # todo一覧にリダイレクトできる
